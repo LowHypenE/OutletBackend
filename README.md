@@ -1,23 +1,24 @@
-# OutletBackend - Learning Service
+# OutletBackend - Vercel Serverless
 
-A Node.js + Express backend service that uses headless Chrome (Puppeteer) to learn from external websites and return fully rendered HTML content. This service is designed to handle JavaScript-heavy sites like Google, YouTube, and Reddit that typically return 403 errors with traditional HTTP requests.
+A serverless Node.js backend service that uses headless Chrome (Puppeteer) to learn from external websites and return fully rendered HTML content. Optimized for Vercel deployment with minimal cold start times.
 
 ## 🌟 Features
 
-- **Headless Browser**: Uses Puppeteer with Chrome for full JavaScript rendering
+- **Serverless Architecture**: Optimized for Vercel Lambda functions
+- **Headless Browser**: Uses Puppeteer with chrome-aws-lambda for serverless compatibility
 - **Realistic Browser Simulation**: Windows Chrome user agent and headers
 - **Network Idle Waiting**: Waits for `networkidle2` to ensure complete page load
 - **Anti-Bot Protection**: Throttling, realistic headers, and browser behavior
-- **Render-Ready**: Optimized for deployment on Render with proper Chrome args
+- **Fast Cold Starts**: Optimized for minimal Lambda execution time
 - **Error Handling**: Comprehensive error handling with specific error messages
-- **Resource Management**: Proper browser instance management and cleanup
+- **Resource Management**: Automatic browser cleanup
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- Node.js 16+ and npm 8+
-- Chrome/Chromium (installed automatically with Puppeteer)
+- Node.js 18+ and npm 8+
+- Vercel CLI installed globally
 
 ### Local Development
 
@@ -26,21 +27,28 @@ A Node.js + Express backend service that uses headless Chrome (Puppeteer) to lea
    npm install
    ```
 
-2. **Start the server**
+2. **Install Vercel CLI**
    ```bash
-   npm start
+   npm install -g vercel
    ```
 
-3. **Test the learning endpoint**
+3. **Start development server**
    ```bash
-   curl "http://localhost:10000/learn?url=https://www.google.com"
+   npm run dev
+   # or
+   vercel dev
+   ```
+
+4. **Test the learning endpoint**
+   ```bash
+   curl "http://localhost:3000/api/learn?url=https://www.google.com"
    ```
 
 ## 🌐 API Endpoints
 
 ### Learning Endpoint
 ```
-GET /learn?url=<TARGET_URL>
+GET /api/learn?url=<TARGET_URL>
 ```
 
 **Description**: Learns from the target website using a headless browser and returns the fully rendered HTML.
@@ -52,12 +60,12 @@ GET /learn?url=<TARGET_URL>
 
 **Example**:
 ```bash
-curl "https://outletbackend.onrender.com/learn?url=https://www.youtube.com"
+curl "https://your-app.vercel.app/api/learn?url=https://www.youtube.com"
 ```
 
 ### Health Check
 ```
-GET /health
+GET /api/health
 ```
 
 **Description**: Returns server status and feature information.
@@ -68,15 +76,20 @@ GET /health
   "status": "OK",
   "timestamp": "2024-01-01T00:00:00.000Z",
   "uptime": 3600,
-  "port": 10000,
   "environment": "production",
+  "platform": "Vercel Serverless",
   "features": {
     "headlessBrowser": true,
     "antiBotMeasures": true,
     "headerForwarding": true,
     "throttling": true,
     "redirectHandling": true,
-    "enhancedLogging": true
+    "enhancedLogging": true,
+    "serverless": true
+  },
+  "endpoints": {
+    "learn": "/api/learn?url=<TARGET_URL>",
+    "health": "/api/health"
   }
 }
 ```
@@ -85,20 +98,17 @@ GET /health
 
 ### Environment Variables
 
-- `PORT`: Server port (default: 10000)
 - `NODE_ENV`: Environment (development/production)
 - `THROTTLE_ENABLED`: Enable request throttling (default: true)
 - `THROTTLE_MIN_MS`: Minimum throttle delay in ms (default: 100)
 - `THROTTLE_MAX_MS`: Maximum throttle delay in ms (default: 500)
 
-### Chrome Arguments
+### Vercel Configuration
 
-The headless browser is configured with these arguments for Render compatibility:
-- `--no-sandbox`: Required for Render deployment
-- `--disable-setuid-sandbox`: Security sandbox disable
-- `--disable-dev-shm-usage`: Memory optimization
-- `--disable-gpu`: GPU acceleration disable
-- `--disable-web-security`: CORS bypass for learning
+The `vercel.json` file configures:
+- **Max Duration**: 30 seconds (Vercel Pro limit)
+- **Environment**: Production mode
+- **Function Settings**: Optimized for serverless execution
 
 ## 🛡️ Anti-Bot Measures
 
@@ -120,84 +130,91 @@ The headless browser is configured with these arguments for Render compatibility
 
 ## 📊 Performance
 
-### Resource Usage
-- **Memory**: ~100-200MB per browser instance
-- **CPU**: Moderate usage during page rendering
-- **Network**: Full page content transfer
-- **Time**: 2-5 seconds per request (including throttling)
+### Serverless Optimization
+- **Cold Start**: ~2-3 seconds (includes browser launch)
+- **Warm Start**: ~1-2 seconds (browser reuse)
+- **Memory**: ~256MB per execution
+- **Timeout**: 25 seconds (Vercel limit)
 
-### Optimization
-- **Browser Reuse**: Single browser instance for all requests
-- **Page Cleanup**: Automatic page closure after each request
-- **Timeout Handling**: 30-second timeout for page loads
+### Resource Management
+- **Browser Cleanup**: Automatic browser and page closure
+- **Memory Optimization**: Single browser instance per request
 - **Error Recovery**: Graceful handling of browser crashes
 
 ## 🚀 Deployment
 
-### Render Deployment
+### Vercel Deployment
+
+1. **Install Vercel CLI**
+   ```bash
+   npm install -g vercel
+   ```
+
+2. **Login to Vercel**
+   ```bash
+   vercel login
+   ```
+
+3. **Deploy**
+   ```bash
+   vercel --prod
+   ```
+
+4. **Configure Environment Variables**
+   ```bash
+   vercel env add THROTTLE_ENABLED
+   vercel env add THROTTLE_MIN_MS
+   vercel env add THROTTLE_MAX_MS
+   ```
+
+### GitHub Integration
 
 1. **Connect Repository**
-   - Link your GitHub repository to Render
-   - Select the `outlet_backend` folder as root directory
+   - Link your GitHub repository to Vercel
+   - Vercel will auto-deploy on push to main
 
-2. **Configure Build**
-   - **Build Command**: `npm install`
-   - **Start Command**: `npm start`
-   - **Node Version**: 18.x
+2. **Configure Settings**
+   - Root Directory: `outlet_backend`
+   - Build Command: `npm install`
+   - Output Directory: `api`
 
 3. **Environment Variables**
-   ```
-   NODE_ENV=production
-   PORT=10000
-   THROTTLE_ENABLED=true
-   ```
-
-4. **Deploy**
-   - Render will automatically install Puppeteer and Chrome
-   - The service will be available at `https://your-app.onrender.com`
-
-### Other Platforms
-
-The service can be deployed on any platform that supports:
-- Node.js 16+
-- Chrome/Chromium installation
-- Sufficient memory (512MB+ recommended)
+   - Set in Vercel dashboard or via CLI
+   - `NODE_ENV=production`
+   - `THROTTLE_ENABLED=true`
 
 ## 🔍 Monitoring
 
-### Logs
-The service provides detailed logging:
-- `🔍 Learning from: <URL>` - Request start
-- `⏱️ Throttling request by Xms` - Throttling applied
-- `📄 Loading page: <URL>` - Page navigation
-- `✅ Successfully learned from <URL>` - Success
-- `❌ Learning error for <URL>` - Errors
+### Vercel Analytics
+- **Function Logs**: Available in Vercel dashboard
+- **Performance Metrics**: Execution time and memory usage
+- **Error Tracking**: Automatic error logging and alerts
 
 ### Health Monitoring
-Use the `/health` endpoint to monitor:
-- Server uptime
-- Feature status
-- Browser availability
-- Configuration settings
+Use the `/api/health` endpoint to monitor:
+- Server status
+- Feature availability
+- Platform information
+- Endpoint documentation
 
 ## 🚨 Troubleshooting
 
 ### Common Issues
 
-1. **Browser Launch Failures**
-   - Ensure Chrome is installed
-   - Check memory availability
-   - Verify Chrome arguments
+1. **Cold Start Timeouts**
+   - Increase Vercel Pro plan for 30s timeout
+   - Optimize browser launch arguments
+   - Use connection pooling
 
-2. **Page Load Timeouts**
-   - Increase timeout in code
-   - Check network connectivity
-   - Verify target URL accessibility
-
-3. **Memory Issues**
-   - Monitor browser instance usage
-   - Restart service if needed
+2. **Memory Issues**
+   - Monitor Lambda memory usage
+   - Ensure proper browser cleanup
    - Check for memory leaks
+
+3. **Chrome Launch Failures**
+   - Verify chrome-aws-lambda installation
+   - Check Vercel function logs
+   - Ensure proper Chrome arguments
 
 4. **403 Errors**
    - Verify anti-bot measures are enabled
@@ -212,29 +229,29 @@ Set `NODE_ENV=development` for detailed error messages and additional logging.
 
 ### Basic Learning Request
 ```bash
-curl "https://outletbackend.onrender.com/learn?url=https://www.google.com"
+curl "https://your-app.vercel.app/api/learn?url=https://www.google.com"
 ```
 
 ### With Custom Headers
 ```bash
 curl -H "Cookie: session=abc123" \
      -H "User-Agent: Custom Browser" \
-     "https://outletbackend.onrender.com/learn?url=https://www.youtube.com"
+     "https://your-app.vercel.app/api/learn?url=https://www.youtube.com"
 ```
 
 ### Health Check
 ```bash
-curl "https://outletbackend.onrender.com/health"
+curl "https://your-app.vercel.app/api/health"
 ```
 
-## 🔄 Migration from Proxy
+## 🔄 Migration from Express
 
-This service replaces the previous HTTP-based proxy with a headless browser approach:
+This serverless version replaces the Express server:
 
-- **Old Endpoint**: `/proxy?url=<TARGET_URL>`
-- **New Endpoint**: `/learn?url=<TARGET_URL>`
-- **Old Method**: HTTP fetch with headers
-- **New Method**: Headless Chrome with full rendering
+- **Old**: Express server with persistent browser
+- **New**: Vercel serverless functions with per-request browser
+- **Old Endpoint**: `/learn?url=<TARGET_URL>`
+- **New Endpoint**: `/api/learn?url=<TARGET_URL>`
 
 ## 📄 License
 
@@ -242,4 +259,4 @@ MIT License - see LICENSE file for details.
 
 ---
 
-**Built with ❤️ for OutletV1 Learning Platform**
+**Built with ❤️ for OutletV1 Learning Platform - Vercel Serverless Edition**
